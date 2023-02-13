@@ -6,9 +6,9 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/durudex/verba",
-		"directory": "packages/verba-template"
+		"directory": "pkg/verba-template"
 	},
-	"homepage": "https://github.com/durudex/verba/tree/main/packages/verba-template",
+	"homepage": "https://github.com/durudex/verba/tree/main/pkg/verba-template",
 	"private": true,
 	"type": "module",
 	"main": "./dist/index.js",

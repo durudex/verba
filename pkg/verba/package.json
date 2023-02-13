@@ -7,7 +7,7 @@
 		"type": "git",
 		"url": "https://github.com/durudex/verba"
 	},
-	"homepage": "https://github.com/durudex/verba/tree/main/packages/verba-template",
+	"homepage": "https://github.com/durudex/verba",
 	"type": "module",
 	"main": "./dist/index.js",
 	"typings": "./dist/index.d.ts"

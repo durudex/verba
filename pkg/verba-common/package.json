@@ -6,9 +6,9 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/durudex/verba",
-		"directory": "packages/verba-common"
+		"directory": "pkg/verba-common"
 	},
-	"homepage": "https://github.com/durudex/verba/tree/main/packages/verba-common",
+	"homepage": "https://github.com/durudex/verba/tree/main/pkg/verba-common",
 	"private": true,
 	"type": "module",
 	"main": "./dist/index.js",
