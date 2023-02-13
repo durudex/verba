@@ -1,0 +1,16 @@
+{
+	"name": "verba-composition",
+	"version": "0.0.1",
+	"description": "An elegant language for describing reactive models in a declarative manner.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/durudex/verba",
+		"directory": "packages/verba-composition"
+	},
+	"homepage": "https://github.com/durudex/verba/tree/main/packages/verba-composition",
+	"private": true,
+	"type": "module",
+	"main": "./dist/index.js",
+	"typings": "./dist/index.d.ts"
+}
