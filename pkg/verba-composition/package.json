@@ -9,7 +9,6 @@
 		"directory": "pkg/verba-composition"
 	},
 	"homepage": "https://github.com/durudex/verba/tree/main/pkg/verba-composition",
-	"private": true,
 	"type": "module",
 	"main": "./dist/index.js",
 	"typings": "./dist/index.d.ts"
