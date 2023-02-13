@@ -1,0 +1,16 @@
+{
+	"name": "verba-commmon",
+	"version": "0.0.1",
+	"description": "Collection of common TypeScript utilities.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/durudex/verba",
+		"directory": "packages/verba-common"
+	},
+	"homepage": "https://github.com/durudex/verba/tree/main/packages/verba-common",
+	"private": true,
+	"type": "module",
+	"main": "./dist/index.js",
+	"typings": "./dist/index.d.ts"
+}
