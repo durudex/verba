@@ -1,0 +1,14 @@
+{
+	"name": "verba",
+	"version": "1.0.0",
+	"description": "A framework beyond the frontline of the Web.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/durudex/verba"
+	},
+	"homepage": "https://github.com/durudex/verba/tree/main/packages/verba-template",
+	"type": "module",
+	"main": "./dist/index.js",
+	"typings": "./dist/index.d.ts"
+}

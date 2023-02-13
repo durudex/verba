@@ -1,0 +1,16 @@
+{
+	"name": "verba-template",
+	"version": "0.0.1",
+	"description": "A skeleton of a module that implements some part of Verba.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/durudex/verba",
+		"directory": "packages/verba-template"
+	},
+	"homepage": "https://github.com/durudex/verba/tree/main/packages/verba-template",
+	"private": true,
+	"type": "module",
+	"main": "./dist/index.js",
+	"typings": "./dist/index.d.ts"
+}
