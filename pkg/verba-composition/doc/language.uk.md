@@ -1,57 +1,120 @@
 # Мова композиції
 
-
+Мова композиції Verba - елегантний спосіб описувати реактивні моделі у декларативному стилі.
 
 ## Класи (Class)
 
 Перший рядок має містити назву згенерованого класу та базовий клас через пробіл:
 
 ```
-ClassName BaseName
+Model Base
 ```
 
 До назви згенерованого класу додається долар:
 
 ```ts
-class ClassName$ extends BaseClass {}
+class Model$ extends Base {}
 ```
 
-## Властивості (Property)
+## Властивість (Property)
 
-Далі йде список властивостей довільної довжини.
+Далі йде список із нуля або більшої кількості властивостей. Властивість записується як опціональний список модифікаторів, назва властивості та описання значення властивості через пробіл.
 
 ```
-ClassName BaseName
-	Property1 Initializer
-	Property2 Initializer
-	Property3 Initializer
+Model Base
+	Property1 Value
+	Property2 Value
+	Property3 Value
 ```
 
-Із властивостей генеруються методи:
+Із кожної властивості генерується однойменний метод:
 
 ```ts
-class ClassName$ extends BaseClass {
+class Model$ extends Base {
 	Property1() {
-		return Initializer
+		return Value
 	}
 
 	Property2() {
-		return Initializer
+		return Value
 	}
 
 	Property3() {
-		return Initializer
+		return Value
 	}
 }
 ```
 
-## Ініціалізатори (Initializer)
+Значення властивості може бути виразом або об'єктом. Про них - трохи пізніше.
 
-Ініціалізатор - це декларативне описання значення властивості.  Ініціалізатором може бути примітив, масив, запис чи об'єкт.
+Перед назвою можна додати нуль або більше модифікаторів у наступному порядку:
 
-## Примітиви (Primitives)
+- `mut`
+- `key(T)`
+- `returns(T)`
 
-### Рядки (String)
+### Змінна властивість (Mutable property)
+
+Перед назвою властивості можна додати ключове слово `mut`, щоби зробити її змінною. Згенерований метод мемоїзується й отримує параметр `next` із автоматично виведеним типом.
+
+```
+Model Base
+	mut count 0
+```
+
+```ts
+class Model$ extends Base {
+	@cell count(next = 0) {
+		return next
+	}
+}
+```
+
+### Словник (Dictionary)
+
+Щоби зробити властивість словником, перед його ім'ям треба додати конструкцію `key(T)`, де `T` - назва типу ключа.
+
+До мемоїзованого словника застосовується декоратор `dict`.
+
+```
+Model Base
+	key(number) fib 0
+	mut key(string) friend false
+```
+
+```ts
+class ClassName$ extends BaseName {
+	fib(key: number) {
+		return 0
+	}
+
+	@dict friend(key: string, next = false) {
+		return next
+	}
+}
+```
+
+<!--
+
+### Явний повертаємий тип (Explicit return type)
+
+`return(T)`, де `T` - назва повертаємого типу.
+
+```
+Model Base
+```
+
+-->
+
+## Вираз (Expression)
+
+Вираз - це значення властивості чи складова частина інших конструкцій. Виразом може бути оголошення властивості, посилання на існуючу властивість, примітив, масив або запис.
+
+## Примітив (Primitive)
+
+Примітив - це рядок, число, булеве значення чи `null`.
+
+### Рядок (String)
 
 Рядки розмежовуються апострофами (`'`), підтримуються наступні спеціальні послідовності:
 
@@ -62,11 +125,11 @@ class ClassName$ extends BaseClass {
 
 Інтерпретуються так само, як у JavaScript.
 
-### Числа (Number)
+### Число (Number)
 
 Підмножина числових літералів із JavaScript. Підтримуються цілі, нецілі та від'ємні числа у десятичному записі, також спеціальне значення `Infinity` та `-Infinity`.
 
-### Булеві значення (Boolean)
+### Булеве значення (Boolean)
 
 Так само, як у JavaScript.
 
@@ -74,67 +137,9 @@ class ClassName$ extends BaseClass {
 
 Так само, як у JavaScript.
 
-## Змінні властивості (Mutable property)
+## Масив (Array)
 
-Перед назвою властивості можна додати ключове слово `mut`. До згенерованого методу буде затосовано декоратор `cell`, а сам він отримає опціональний параметр `next` із автоматично виведеним типом.
-
-```
-ClassName BaseName
-	mut count 0
-	mut message 'Greetings!'
-```
-
-```ts
-class ClassName$ extends BaseName {
-	static {
-		cell(this.prototype, 'count')
-		cell(this.prototype, 'message')
-	}
-
-	count(next?: number) {
-		if (def(next)) return next
-		return 0
-	}
-
-	message(next?: string) {
-		if (def(next)) return next
-		return 'Greetings!'
-	}
-}
-```
-
-## Словники (Dictionary)
-
-Щоби зробити властивість словником, перед його ім'ям треба додати конструкцію `key(typename)`, де `typename` - назва типу ключа.
-
-`key` можна поєднати з `mut`, тоді до метода буде застосовано декоратор `dict`.
-
-```
-ClassName BaseName
-	key(number) fib 0
-	mut key(string) friend false
-```
-
-```ts
-class ClassName$ extends BaseName {
-	static {
-		dict(this, 'friend')
-	}
-
-	fib(key: number) {
-		return 0
-	}
-
-	friend(key: string, next?: boolean) {
-		if (def(next)) return next
-		return false
-	}
-}
-```
-
-## Масиви (Array)
-
-Щоби повернути з методу масив, просто перелічіть його елементи.
+Масив - список виразів.
 
 ```
 ClassName BaseName
@@ -155,9 +160,9 @@ ClassName BaseName
 
 Валідні елементи масивів (та ще декількох конструкцій, про які - згодом) називаються виразами.
 
-## Вирази (Expression)
+## Вкладена властивість (Nested property)
 
-Вираз - це ініціалізатор, посилання на існуючу властивість чи оголошення нової. Останній варіант дозволяє описувати властивості саме там, де вони використовуються. Це дає нам змогу описувати об'єктну композицію у наочному деревовидному стилі, а не пласким списком методів.
+Оголошення властивості в якості виразу дає нам змогу описувати об'єктну композицію у наочному деревовидному стилі, а не пласким списком методів.
 
 ```
 ClassName BaseName
@@ -209,21 +214,36 @@ class ClassName$ extends BaseName {
 }
 ```
 
-## Записи (Record)
+## Запис (Record)
 
-Записи - це описання об'єктних літералів. Їхній синтаксис нагадує масиви, але вони оголошуються фігурними дужками `{}`, а перед кожним елементом через пробіл потрібно вказати його ключ-ідентифікатор.
+Запис - це описання об'єктного літералу. Його синтаксис нагадує масиви, але запис оголошуються фігурними дужками `{}`, а перед кожним елементом через пробіл потрібно вказати його ключ-ідентифікатор.
 
 ```
-ClassName BaseClass
+Model Base
 	styles {}
 		display 'flex'
 		color mut colorHex '#000000'
 ```
 
+```ts
+class Model$ extends Base {
+	@cell colorHex(next = '#000000') {
+		return next
+	}
+
+	styles() {
+		return {
+			display: 'flex',
+			color: this.colorHex(),
+		}
+	}
+}
+```
+
 Всередині `{}` можна вказати тип ключа та значення через кому з пробілом:
 
 ```
-ClassName BaseClass
+Model Base
 	tabs {FilterType, string}
 		all 'All tasks'
 		active 'Active tasks'
@@ -231,7 +251,7 @@ ClassName BaseClass
 ```
 
 ```ts
-class ClassName$ extends BaseClass {
+class Model$ extends Base {
 	tabs(): Record<FilterType, string> {
 		return {
 			all: 'All tasks',
@@ -242,10 +262,162 @@ class ClassName$ extends BaseClass {
 }
 ```
 
-## Об'єкти (Object)
+## Об'єкт (Object)
 
-**TODO**
+Щоби описати об'єкт Об'єкт може бути створений лише всередині властивості. Така властивість автоматично мемоїзується й називається фабрикою. Не лякайтеся прикладу нижче, він демонструє всі три види зв'язувань, про які - згодом.
 
-## Аліаси (Alias)
+```
+App View
+	kids
+		Username KyInputString
+			value > username
+		Button KyButton
+			onClick = buttonClick null
+			kids
+				ButtonIcon KyIconStar
+				'Click me, '
+				username
+				'!'
+```
 
-**TODO**
+```ts
+class App$ extends View {
+	kids() {
+		return [
+			this.Username(),
+			this.Button(),
+		]
+	}
+
+	@cell Username() {
+		return new KyInputString
+	}
+
+	username() {
+		return this.Username().value()
+	}
+
+	@cell Button() {
+		const x = new KyButton
+		x.onClick = next => this.buttonClick(next)
+		x.kids = () => [
+			this.ButtonIcon(),
+			'Click me, ',
+			this.username(),
+			'!',
+		]
+		return x
+	}
+
+	@cell buttonClick(next?: Parameters<KyButton['onClick']>[0] = null) {
+		return next
+	}
+
+	@cell ButtonIcon() {
+		return new KyIconStar
+	}
+}
+```
+
+## Властивість об'єкту (Object property)
+
+### Підміна властивості (Property override)
+
+Самий поширений тип зв'язувань - це підміна властивості. Записується просто як назва властивості та довільний вираз через пробіл.
+
+Підміна дозволяє налаштувати об'єкт чи навіть перевизначити деталі його реалізації, замінивши його властивість на власну. Ця техніка ідентична перевизначенню методу базового класу в нащадку, тільки на рівні екземплярів.
+
+```
+Model Base
+	Obj Some
+		first 0
+		second ownSecond 1
+```
+
+```ts
+class Model$ extends Base {
+	@cell Obj() {
+		const x = new Obj
+		x.first = () => 0
+		x.second = () => this.ownSecond()
+	}
+
+	ownSecond() {
+		return 1
+	}
+}
+```
+
+### Аліас (Alias)
+
+Аліас записується як назва властивості об'єкту, символ `>` та назва власного методу, що буде повертати цільову властивість.
+
+```
+FancyInput View
+	kids
+		Basic KyInputString
+			value > value
+```
+
+```ts
+class FancyInput$ extends View {
+	kids() {
+		return [
+			this.Basic(),
+		]
+	}
+
+	@cell Basic() {
+		return new KyInputString
+	}
+
+	value() {
+		return this.Basic().value()
+	}
+}
+```
+
+### Двобічне зв'язування (Two-way binding)
+
+Те саме, що й підміна, але для змінних властивостей. Записується як назва цільової властивості об'єкту, символ `=` та назва власної змінної властивості, що буде джерелом даних для цільової властивості. Можна на місці оголосити власну властивість, дописавши її початкове значення через пробіл.
+
+```
+App View
+	mut count1 -10
+	kids
+		Counter1 Counter
+			value = count1
+		Counter2 Counter
+			value = count2 10
+```
+
+```ts
+class App$ extends View {
+	@cell count1(next = -10) {
+		return next
+	}
+
+	kids() {
+		return [
+			this.Counter1(),
+			this.Counter2(),
+		]
+	}
+
+	@cell Counter1() {
+		const x = new Counter
+		x.value = next => this.count1(next)
+		return x
+	}
+
+	@cell Counter2() {
+		const x = new Counter
+		x.value = next => this.count2(next)
+		return x
+	}
+
+	@cell count2(next = 10) {
+		return next
+	}
+}
+```
