@@ -26,7 +26,7 @@ export function wrapper<BaseF extends Formula>(wrap: Wrap<BaseF>) {
 
 		Reflect.defineProperty(bound, '$$', {get: inspect?.bind(bound)})
 
-		return bound
+		return bound as F
 	}
 
 	return [method, closure] as const
