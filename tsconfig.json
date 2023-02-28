@@ -6,6 +6,6 @@
 		"lib": ["ESNext", "DOM"],
 		"experimentalDecorators": true,
 		"moduleResolution": "node",
-		"suppressImplicitAnyIndexErrors": true
+		"suppressImplicitAnyIndexErrors": true,
 	}
 }
