@@ -1,47 +1,38 @@
-import {assert, test} from '@krulod/sorcerer'
-import {compare} from '../src/compare'
-
-function is<T>(a: T, b: T) {
-	return assert.is(compare(a, b), true)
-}
-
-function isnt<T>(a: T, b: T) {
-	return assert.is(compare(a, b), false)
-}
+import {assert, test} from 'verba-viter'
 
 test('compare', {
-	'null and unefined': () => {
-		is(null, null)
-		is(undefined, undefined)
-		isnt(undefined, null)
-		isnt({}, null)
+	'null and undefined': () => {
+		assert.like(null, null)
+		assert.like(undefined, undefined)
+		assert.notLike(undefined, null)
+		assert.notLike({}, null)
 	},
 
 	'nan': () => {
-		is(NaN, NaN)
+		assert.like(NaN, NaN)
 	},
 
 	'json': () => {
-		is({}, {})
-		isnt({x: true}, {x: false})
-		isnt({x: undefined}, {})
-		is({a: 1, b: 2}, {b: 2, a: 1})
-		is({x: {y: 1}}, {x: {y: 1}})
+		assert.like({}, {})
+		assert.notLike({x: true}, {x: false})
+		assert.notLike({x: undefined}, {})
+		assert.like({a: 1, b: 2}, {b: 2, a: 1})
+		assert.like({x: {y: 1}}, {x: {y: 1}})
 	},
 
 	'array': () => {
-		is([], [])
-		is([1, [2]], [1, [2]])
-		isnt([0], [1])
-		isnt([1, 2, ], [1, 2, undefined])
+		assert.like([], [])
+		assert.like([1, [2]], [1, [2]])
+		assert.notLike([0], [1])
+		assert.notLike([1, 2, ], [1, 2, undefined])
 	},
 
 	'identity': () => {
 		class X {}
 
-		isnt(new X(), new X())
+		assert.notLike(new X(), new X())
 
-		isnt(() => {}, () => {})
+		assert.notLike(() => {}, () => {})
 	},
 
 	'circular reference': () => {
@@ -51,22 +42,22 @@ test('compare', {
 		const b = {x: {}}
 		b['cycle'] = b
 
-		is(a, b)
+		assert.like(a, b)
 	},
 
 	'date': () => {
-		is(new Date(111), new Date(111))
-		isnt(new Date(0), new Date(1))
+		assert.like(new Date(111), new Date(111))
+		assert.notLike(new Date(0), new Date(1))
 	},
 
 	'regexp': () => {
-		is(/\x22/mig, /\x22/mig)
-		isnt(/\x22/mig, /\x21/mig)
-		isnt(/\x22/mig, /\x22/mg)
+		assert.like(/\x22/mig, /\x22/mig)
+		assert.notLike(/\x22/mig, /\x21/mig)
+		assert.notLike(/\x22/mig, /\x22/mg)
 	},
 
 	'error': () => {
-		isnt(new Error(), new Error())
+		assert.notLike(new Error(), new Error())
 
 		function err(val: string) {
 			return new Error(val)
@@ -74,23 +65,23 @@ test('compare', {
 
 		{
 			const [a, b] = ['', ''].map(err)
-			is(a, b)
+			assert.like(a, b)
 		}
 
 		{
 			const [a, b] = ['foo', 'bar'].map(err)
-			isnt(a, b)
+			assert.notLike(a, b)
 		}
 	},
 
 
 	'map': () => {
-		is(new Map(), new Map())
-		is(
+		assert.like(new Map(), new Map())
+		assert.like(
 			new Map([['x', [0]]]),
 			new Map([['x', [0]]])
 		)
-		isnt(
+		assert.notLike(
 			new Map([['x', [true]]]),
 			new Map([['x', [false]]]),
 		)
@@ -98,17 +89,17 @@ test('compare', {
 	},
 
 	'set': () => {
-		is(new Set(), new Set())
-		isnt(
+		assert.like(new Set(), new Set())
+		assert.notLike(
 			new Set([[true]]),
 			new Set([[false]])
 		)
 	},
 
 	'uint8array': () => {
-		is(new Uint8Array(), new Uint8Array())
-		is(new Uint8Array([0]), new Uint8Array([0]))
-		isnt(new Uint8Array([0]), new Uint8Array([1]))
+		assert.like(new Uint8Array(), new Uint8Array())
+		assert.like(new Uint8Array([0]), new Uint8Array([0]))
+		assert.notLike(new Uint8Array([0]), new Uint8Array([1]))
 	},
 
 	'custom': () => {
@@ -120,7 +111,7 @@ test('compare', {
 			}
 		}
 
-		is(new User('Jin'), new User('Jin'))
-		isnt(new User('Jin'), new User('John'))
+		assert.like(new User('Jin'), new User('Jin'))
+		assert.notLike(new User('Jin'), new User('John'))
 	},
 })
