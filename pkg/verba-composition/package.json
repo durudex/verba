@@ -11,5 +11,5 @@
 	"homepage": "https://github.com/durudex/verba/tree/main/pkg/verba-composition",
 	"type": "module",
 	"main": "./dist/index.js",
-	"typings": "./dist/src/index.ts"
+	"typings": "./src/index.ts"
 }

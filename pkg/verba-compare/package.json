@@ -11,8 +11,5 @@
 	"homepage": "https://github.com/durudex/verba/tree/main/pkg/verba-compare",
 	"type": "module",
 	"main": "./dist/index.js",
-	"typings": "./dist/index.d.ts",
-	"devDependencies": {
-		"@krulod/sorcerer": "^0.0.5"
-	}
+	"typings": "./src/index.ts"
 }

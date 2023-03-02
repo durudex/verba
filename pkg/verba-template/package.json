@@ -12,5 +12,5 @@
 	"private": true,
 	"type": "module",
 	"main": "./dist/index.js",
-	"typings": "./dist/index.d.ts"
+	"typings": "./src/index.ts"
 }
