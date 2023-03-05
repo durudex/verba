@@ -1,5 +1,4 @@
 import {once} from './once'
-import {owning} from './owning'
 
 export class Base {
 	static make<T extends object>(
@@ -14,14 +13,6 @@ export class Base {
 
 		return 'inheritance' in base!
 			? [this, ...(base as typeof Base).inheritance()]
-			: [this]
-	}
-
-	@once owning(): Base[] {
-		const owner = owning.get(this)
-
-		return owner instanceof Base
-			? [this, ...owner.owning()]
 			: [this]
 	}
 

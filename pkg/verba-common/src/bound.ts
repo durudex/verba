@@ -19,6 +19,6 @@ export function bound(
 		},
 	}
 
-	Object.defineProperty(host, field, next)
+	Reflect.defineProperty(host, field, next)
 	return next
 }

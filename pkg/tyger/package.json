@@ -1,0 +1,20 @@
+{
+	"name": "tyger",
+	"version": "0.0.3",
+	"description": "Next generation reactivity.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/durudex/verba",
+		"directory": "pkg/tyger"
+	},
+	"homepage": "https://github.com/durudex/verba/tree/main/pkg/tyger",
+	"private": true,
+	"type": "module",
+	"main": "./dist/index.js",
+	"typings": "./src/index.ts",
+	"dependencies": {
+		"verba-common": "*",
+		"verba-compare": "*"
+	}
+}
