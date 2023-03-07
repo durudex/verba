@@ -6,10 +6,13 @@ import {owning, owningCheck} from './owning'
 import {Task} from './task'
 import {action} from './action'
 
+// atom is a long-living reactive computation
 export class Atom<F extends Formula> extends Unit<F> {
 	set(next: UnitCache<F>) {
 		if (!compare(this.cache, next)) {
-			this.cacheOff()
+			if (owningCheck(this.cache, this)) {
+				this.cache.dispose()
+			}
 
 			if (isDisposable(next) && !owning.has(next)) {
 				owning.set(next, this)
@@ -19,7 +22,7 @@ export class Atom<F extends Formula> extends Unit<F> {
 				} catch {}
 			}
 
-			this.emit()
+			this.notify()
 		}
 
 		this.cache = next
@@ -27,7 +30,7 @@ export class Atom<F extends Formula> extends Unit<F> {
 
 		// release upstream tasks
 		for (let i = this.pubAt; i < this.pubLimit; i += 2) {
-			;(this.data[i] as Unit).release()
+			(this.data[i] as Unit).release()
 		}
 	}
 
@@ -36,8 +39,6 @@ export class Atom<F extends Formula> extends Unit<F> {
 			return this.push(args)
 		}
 
-		// ensure that all reruns of outer tasks
-		// return the same value
 		if (Unit.current instanceof Task) {
 			return this.pullOnce()
 		}
@@ -56,10 +57,7 @@ export class Atom<F extends Formula> extends Unit<F> {
 
 	dispose() {
 		super.dispose()
-		this.cacheOff()
-	}
 
-	cacheOff() {
 		if (owningCheck(this.cache, this)) {
 			this.cache.dispose()
 		}

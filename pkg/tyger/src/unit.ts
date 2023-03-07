@@ -4,12 +4,12 @@ import {Cursor} from './cursor'
 export type UnitCache<F extends Formula> =
 	ReturnType<F> | Error | Promise<ReturnType<F> | Error>
 
+// promises thrown as exceptions are stored in all dependent units caches,
+// but there's no need for every unit in the stack to subscribe to them,
+// so let's register handled promises in a global WeakSet
 const promises = new WeakSet<Promise<any>>()
 
-// an unit is a lightweight object representing a caсрув pausable function
-// with smart cache invalidation.
-// Unit class implements efficient linking algorithms
-// and handles exceptional states.
+// unit is a reactive computation state
 export class Unit<F extends Formula = Formula> {
 	// data array holds all the variable data of an unit:
 	// ┌────────┬───────────────────────────┬───────────────────────────┐
@@ -18,21 +18,23 @@ export class Unit<F extends Formula = Formula> {
 	// │A0 A1 A2│P0 PS0 P1 PS1 P2 PS2 P3 PS3│S0 SS0 S1 SS1 S2 SS2 S3 SS3│
 	// └────────┴───────────────────────────┴───────────────────────────┘
 	//
-	// args may store the key of an atom in a dictionary or task parameters.
-	// next, there are publishers and subscribers lists
-	// delimited by pubAt and subAt indexes.
-	// these lists contain references to peer units alternating
-	// with self indexes in the corresponding peer's data arrays.
-	// we call every peer-index pair a slot.
-	// unlike subscribers, publishers list is ordered and may contain holes.
+	// it's divided into three parts named args, pubs and subs:
+	//
+	// args slice contains arguments passed to the formula.
+	// in tasks, it's also used to ensure that a task's result may be reused
+	// across reruns of outer unit (see Task.for)
+	//
+	// next, there are peer units (pubs and subs).
+	// these slices contain references to peer units alternating
+	// with self indexes in a corresponding unit's data array.
+	// a peer-index pair is called a slot.
 	data: unknown[]
 	pubAt: number
 	subAt: number
 
-	// cursor represents the state of a unit.
-	// non-negative cursor means that this unit is currently refreshing
-	// and points to the latest publisher index.
-	// negative values encode the status of this unit's cache.
+	// values compatible with the Cursor enum encode special unit states,
+	// non-negative values mean this unit is currently refreshing
+	// and point to the latest publisher index in the data array
 	cursor: number = Cursor.stale
 
 	cache!: UnitCache<F>
@@ -47,47 +49,12 @@ export class Unit<F extends Formula = Formula> {
 		this.pubAt = this.subAt = this.data.length
 	}
 
-	get tracking() {
-		return this.cursor >= 0
-	}
-
-	get subEmpty() {
-		return this.subAt === this.data.length
-	}
-
-	get final() {
-		return this.cursor === Cursor.final
-	}
-
 	get pubLimit() {
-		return this.tracking ? this.cursor : this.subAt
-	}
-
-	get last() {
-		return this.data.length - 2
+		return this.cursor >= 0 ? this.cursor : this.subAt
 	}
 
 	get args() {
 		return this.data.slice(0, this.pubAt)
-	}
-
-	get pubs() {
-		return this.slice(this.pubAt, this.pubLimit)
-	}
-
-	get subs() {
-		return this.slice(this.subAt, this.data.length)
-	}
-
-	private slice(min: number, max: number) {
-		const result: Unit[] = []
-
-		for (let i = min; i < max; i += 2) {
-			const peer = this.data[i] as Unit | undefined
-			if (peer) result.push(peer)
-		}
-
-		return result
 	}
 
 	private pop2() {
@@ -95,7 +62,7 @@ export class Unit<F extends Formula = Formula> {
 		this.data.pop()
 	}
 
-	private move(from: number, to: number) {
+	private copy(from: number, to: number) {
 		const peer = this.data[from] as Unit
 		const selfAt = this.data[from + 1] as number
 
@@ -105,82 +72,76 @@ export class Unit<F extends Formula = Formula> {
 		peer.data[selfAt + 1] = to
 	}
 
-
-	// declarations below are the graph traversal APIs.
-	// they are implemented in an iterative style because
-	// recursive algorithms are somewhat slower.
-	//
-	//           ┌───────────┐
-	//         ┌─┤Root.emit()├──┐
-	//         │ └───────────┘  │
+	//           ┌────┬──────┐
+	//         ┌─┤Root│emit()├──┐
+	//         │ └────┴──────┘  │
 	//         │                │
-	//       ┌─▼─┬─────┐      ┌─▼─┬─────┐
-	//   ┌───┤ A │stale├─┐    │ B │stale├──┐
-	//   │   └───┴─────┘ │    └───┴─────┘  │
-	//   │               │                 │
-	// ┌─▼─┬─────┐     ┌─▼─┬─────┐       ┌─▼─┬─────┐
-	// │ C │doubt│     │ D │doubt│       │ E │doubt│
-	// └─┬─┴─────┘     └───┴─────┘       └─┬─┴─────┘
-	//   │                                 │
-	// ┌─▼─┬─────┐                       ┌─▼─┬─────┐
-	// │ F │doubt│                       │ G │doubt│
-	// └───┴─────┘                       └───┴─────┘
+	//       ┌─▼─┬───────┐    ┌─▼─┬───────┐
+	//   ┌───┤ A │stale()├─┐  │ B │stale()├─┐
+	//   │   └───┴───────┘ │  └───┴───────┘ │
+	//   │                 │                │
+	// ┌─▼─┬─────┐       ┌─▼─┬─────┐      ┌─▼─┬─────┐
+	// │ C │doubt│       │ D │doubt│      │ E │doubt│
+	// └─┬─┴─────┘       └───┴─────┘      └─┬─┴─────┘
+	//   │                                  │
+	// ┌─▼─┬─────┐                        ┌─▼─┬─────┐
+	// │ C │doubt│                        │ G │doubt│
+	// └───┴─────┘                        └───┴─────┘
 
-	emit() {
+	notify() {
 		for (let i = this.subAt; i < this.data.length; i += 2) {
 			(this.data[i] as Unit).stale()
 		}
 	}
 
-	// a global queue populated with units we need to mark as doubt
 	private static queue: Unit[] = []
 
-	// mark this unit as stale and its downstream as doubt
 	stale() {
-		if (this.enqueue(Cursor.stale)) {
+		if (this.subEnqueue(Cursor.stale)) {
 			return
 		}
 
-		let unit: Unit | undefined
+		let pub: Unit | undefined
 
-		while (unit = Unit.queue.pop()) {
-			unit.enqueue(Cursor.doubt)
+		while (pub = Unit.queue.pop()) {
+			pub.subEnqueue(Cursor.doubt)
 		}
 	}
 
-	// set this unit's cursor to c
-	// and push its subscribers to the invalidation queue.
-	// do nothing if the subtree is already invalidated.
-	private enqueue(c: Cursor) {
-		if (this.cursor >= c) return true
+	private subEnqueue(cursor: Cursor) {
+		if (this.cursor >= cursor) {
+			return true
+		}
 
-		this.cursor = c
+		this.cursor = cursor
 
 		for (let i = this.subAt; i < this.data.length; i += 2) {
 			Unit.queue.push(this.data[i] as Unit)
 		}
 	}
 
-	// reaping is a procedure of cancelling unneeded work
-	// and releasing resources for GC.
-	// an unit is added to the reaping list whenever it loses the last sub
-	// rendering libraries and integrations with Tyger
-	// should invoke Unit.reap after commiting updates
+	// when the last subscriber unsubscribes from a publisher,
+	// mark this publisher as sweeping.
+	// calling Unit.sweep disposes such units,
+	// implementing a reactive "garbage collector"
 
-	static reaping = new Set<Unit>()
+	static sweeping = new Set<Unit>()
 
-	reapable() {
-		return this.subEmpty
-	}
+	static sweep() {
+		while (Unit.sweeping.size) {
+			const {sweeping} = Unit
+			Unit.sweeping = new Set
 
-	static reap() {
-		while (Unit.reaping.size) {
-			for (const unit of Unit.reaping) {
-				if (unit.reapable()) {
+			for (const unit of sweeping) {
+				if (unit.sweepable()) {
 					unit.dispose()
 				}
 			}
 		}
+	}
+
+	sweepable() {
+		return this.subAt === this.data.length
 	}
 
 	// an unit's publisher count may reduce after refreshing.
@@ -220,17 +181,17 @@ export class Unit<F extends Formula = Formula> {
 				const end = pub.data.length - 2
 
 				if (pos !== end) {
-					pub.move(end, pos)
+					pub.copy(end, pos)
 				}
 				pub.pop2()
 
-				if (pub.reapable()) {
-					Unit.reaping.add(pub)
+				if (pub.sweepable()) {
+					Unit.sweeping.add(pub)
 				}
 			}
 
 			if (this.subAt < this.data.length) {
-				this.move(this.last, i)
+				this.copy(this.data.length - 2, i)
 				this.pop2()
 			} else {
 				tail++
@@ -248,7 +209,7 @@ export class Unit<F extends Formula = Formula> {
 		// atoms usually dispose when they become unused,
 		// but tasks do right after completion,
 		// so we need to drop them out of their initiators' data slots
-		for (let i = this.last; i >= this.subAt; i -= 2) {
+		for (let i = this.data.length - 2; i >= this.subAt; i -= 2) {
 			const sub = this.data[i] as Unit
 			const pos = this.data[i + 1] as number
 
@@ -268,7 +229,7 @@ export class Unit<F extends Formula = Formula> {
 	static current: Unit | null = null
 
 	pull() {
-		if (this.tracking) {
+		if (this.cursor >= 0) {
 			this.cache = new Error('Circular subscription')
 		} else {
 			const sub = Unit.current
@@ -286,15 +247,17 @@ export class Unit<F extends Formula = Formula> {
 					}
 
 					if (last) {
-						sub.subDepart()
-						sub.move(c, this.subAt - 2)
+						if (sub.subAt < sub.data.length) {
+							sub.copy(sub.subAt, sub.data.length)
+						}
+						sub.copy(c, this.subAt)
+						this.subAt += 2
 					}
 				} else {
-					// if subscriber's publisher count has grown,
-					// reserve space for self
-					// by sending subscriber's first subscriber slot
-					// to the end of its data list
-					sub.subDepart()
+					if (sub.subAt < sub.data.length) {
+						sub.copy(sub.subAt, sub.data.length)
+					}
+					this.subAt += 2
 				}
 
 				sub.data[c] = this
@@ -310,13 +273,6 @@ export class Unit<F extends Formula = Formula> {
 		}
 
 		return this.cache as Awaited<ReturnType<F>>
-	}
-
-	private subDepart() {
-		if (this.subAt < this.data.length) {
-			this.move(this.subAt, this.data.length)
-		}
-		this.subAt += 2
 	}
 
 	refresh() {

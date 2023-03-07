@@ -1,8 +1,6 @@
-import {wrapper} from 'verba-common'
-import {taskFor} from './task-for'
+import {memo} from 'verba-common'
+import {Task} from './task'
 
-export const [action, createAction] = wrapper(formula => ({
-	next(...args) {
-		return taskFor(this, formula, args).pull()
-	},
-}))
+export const action = memo(f => function (this: any, ...args: any) {
+	return Task.for(this, f, args).pull()
+})
