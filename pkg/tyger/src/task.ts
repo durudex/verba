@@ -28,7 +28,7 @@ export class Task<F extends Formula> extends Unit<F> {
 			}
 		}
 
-		return new Task(idFor(host, formula), formula, host, args)
+		return new Task(idFor(host, formula) + '(...)', formula, host, args)
 	}
 
 	set(next: UnitCache<F>) {

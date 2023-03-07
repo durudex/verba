@@ -10,10 +10,12 @@ export interface Memo<BaseF extends Formula> {
 	<F extends BaseF>(formula: F, name?: string): F
 }
 
-type Wrap<F> = (prev: F, store: WeakMap<any, any>) => F
+type Wrap<F, Stored> = (prev: F, store: WeakMap<any, Stored>) => F
 
 /** Define a decorator with inspectable state. */
-export const memo = <BaseF extends Formula, Stored>(wrap: Wrap<BaseF>) =>
+export const memo =
+	<BaseF extends Formula, Stored>
+	(wrap: Wrap<BaseF, Stored>) =>
 	((...args: any[]) => {
 		const store = new WeakMap<any, Stored>()
 
