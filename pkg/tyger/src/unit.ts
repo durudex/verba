@@ -133,14 +133,14 @@ export class Unit<F extends Formula = Formula> {
 			Unit.sweeping = new Set
 
 			for (const unit of sweeping) {
-				if (unit.sweepable()) {
+				if (unit.sweep()) {
 					unit.dispose()
 				}
 			}
 		}
 	}
 
-	sweepable() {
+	sweep() {
 		return this.subAt === this.data.length
 	}
 
@@ -185,7 +185,7 @@ export class Unit<F extends Formula = Formula> {
 				}
 				pub.pop2()
 
-				if (pub.sweepable()) {
+				if (pub.sweep()) {
 					Unit.sweeping.add(pub)
 				}
 			}
@@ -235,7 +235,7 @@ export class Unit<F extends Formula = Formula> {
 			const sub = Unit.current
 
 			// link to the current subscriber
-			if (sub) {
+			link: if (sub) {
 				const c = sub.cursor
 
 				if (c < sub.subAt) {
@@ -243,7 +243,7 @@ export class Unit<F extends Formula = Formula> {
 
 					if (sub === last) {
 						sub.cursor += 2
-						return
+						break link
 					}
 
 					if (last) {

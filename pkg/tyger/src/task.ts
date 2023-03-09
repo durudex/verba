@@ -4,13 +4,17 @@ import {Cursor} from './cursor'
 import {idFor} from './id-for'
 import {Unit, UnitCache} from './unit'
 
-// task is an asynchronous flow step
+// represents an asynchronous flow step.
+// used to temporarily memoize non-pure or CPU-intensive work.
+// functions wrapped with tasks are intended to be called from other units
 export class Task<F extends Formula> extends Unit<F> {
+	static empty: [] = []
+
 	static for<F extends Formula>(
 		host: ThisParameterType<F>,
 		formula: F,
 		args: Parameters<F>
-	) {
+	): Task<F> {
 		const parent = Unit.current
 
 		if (parent) {
@@ -28,7 +32,7 @@ export class Task<F extends Formula> extends Unit<F> {
 			}
 		}
 
-		return new Task(idFor(host, formula) + '(...)', formula, host, args)
+		return new Task<F>(idFor(host, formula) + '(...)', formula, host, args)
 	}
 
 	set(next: UnitCache<F>) {
@@ -40,7 +44,7 @@ export class Task<F extends Formula> extends Unit<F> {
 		} else {
 			this.cursor = Cursor.final
 
-			if (this.sweepable()) {
+			if (this.sweep()) {
 				this.dispose()
 			}
 		}

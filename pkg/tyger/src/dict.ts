@@ -25,7 +25,7 @@ export const dict = memo<(this: any, key: any, ...args: any) => any, Atoms>
 		return atom.channel(1, args)
 	})
 
-export class DictAtom extends Atom<Formula> {
+class DictAtom extends Atom<Formula> {
 	store!: Atoms
 
 	dispose() {
